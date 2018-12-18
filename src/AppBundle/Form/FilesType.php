@@ -3,6 +3,7 @@
 namespace AppBundle\Form;
 
 use AppBundle\Entity\Files;
+use Doctrine\ORM\Mapping\Entity;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -22,7 +23,7 @@ class FilesType extends AbstractType
             ->add('description')
             ->add('date')
             ->add('subject')
-            ->add('brochure', FileType::class, array('label' => 'Brochure (PDF file)'))
+            ->add('brochure', FileType::class,array('data_class' => null,'label' => 'Brochure (PDF file)'))
         ;
     }
     
@@ -32,7 +33,7 @@ class FilesType extends AbstractType
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults(array(
-            'data_class' => 'AppBundle\Entity\Files'
+            'data_class' => Files::class
         ));
     }
 }
