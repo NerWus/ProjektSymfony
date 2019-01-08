@@ -50,9 +50,10 @@ class Files
      */
     private $subject;
     /**
-     * @ORM\Column(type="string")
+     * @ORM\Column(name="brochure", type="string", length=255, nullable=true)
      *
      * @Assert\NotBlank(message="Please, upload the product brochure as a PDF file.")
+     * @ORM\Column(name="brochure", type="string", length=255, nullable=true)
      * @Assert\File(mimeTypes={ "application/pdf" })
      */
     private $brochure;
@@ -61,7 +62,6 @@ class Files
     {
         return $this->brochure;
     }
-
     public function setBrochure($brochure)
     {
         $this->brochure = $brochure;

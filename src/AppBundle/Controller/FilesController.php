@@ -2,18 +2,18 @@
 
 namespace AppBundle\Controller;
 
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Pagerfanta\Pagerfanta;
 use Pagerfanta\Adapter\DoctrineORMAdapter;
 use Pagerfanta\View\TwitterBootstrap3View;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-//use Symfony\Symfony\Component\Routing\Annotation\Route;
 use AppBundle\Form\FilesType;
 use Symfony\symfony\src\Symfony\Component\Routing;
 use AppBundle\Entity\Files;
+use AppBundle\Entity\History;
 
 /**
  * Files controller.
@@ -35,7 +35,7 @@ class FilesController extends Controller
 
         list($filterForm, $queryBuilder) = $this->filter($queryBuilder, $request);
         list($files, $pagerHtml) = $this->paginator($queryBuilder, $request);
-        
+
         $totalOfRecordsString = $this->getTotalOfRecordsString($queryBuilder, $request);
 
         return $this->render('files/index.html.twig', array(
@@ -48,9 +48,9 @@ class FilesController extends Controller
     }
 
     /**
-    * Create filter form and process filter request.
-    *
-    */
+     * Create filter form and process filter request.
+     *
+     */
     protected function filter($queryBuilder, Request $request)
     {
         $session = $request->getSession();
@@ -77,13 +77,13 @@ class FilesController extends Controller
             // Get filter from session
             if ($session->has('FilesControllerFilter')) {
                 $filterData = $session->get('FilesControllerFilter');
-                
+
                 foreach ($filterData as $key => $filter) { //fix for entityFilterType that is loaded from session
                     if (is_object($filter)) {
                         $filterData[$key] = $queryBuilder->getEntityManager()->merge($filter);
                     }
                 }
-                
+
                 $filterForm = $this->createForm('AppBundle\Form\FilesFilterType', $filterData);
                 $this->get('lexik_form_filter.query_builder_updater')->addFilterConditions($filterForm, $queryBuilder);
             }
@@ -94,31 +94,30 @@ class FilesController extends Controller
 
 
     /**
-    * Get results from paginator and get paginator view.
-    *
-    */
+     * Get results from paginator and get paginator view.
+     *
+     */
     protected function paginator($queryBuilder, Request $request)
     {
         //sorting
-        $sortCol = $queryBuilder->getRootAlias().'.'.$request->get('pcg_sort_col', 'id');
+        $sortCol = $queryBuilder->getRootAlias() . '.' . $request->get('pcg_sort_col', 'id');
         $queryBuilder->orderBy($sortCol, $request->get('pcg_sort_order', 'desc'));
         // Paginator
         $adapter = new DoctrineORMAdapter($queryBuilder);
         $pagerfanta = new Pagerfanta($adapter);
-        $pagerfanta->setMaxPerPage($request->get('pcg_show' , 10));
+        $pagerfanta->setMaxPerPage($request->get('pcg_show', 10));
 
         try {
             $pagerfanta->setCurrentPage($request->get('pcg_page', 1));
         } catch (\Pagerfanta\Exception\OutOfRangeCurrentPageException $ex) {
             $pagerfanta->setCurrentPage(1);
         }
-        
+
         $entities = $pagerfanta->getCurrentPageResults();
 
         // Paginator - route generator
         $me = $this;
-        $routeGenerator = function($page) use ($me, $request)
-        {
+        $routeGenerator = function ($page) use ($me, $request) {
             $requestParams = $request->query->all();
             $requestParams['pcg_page'] = $page;
             return $me->generateUrl('files', $requestParams);
@@ -134,13 +133,13 @@ class FilesController extends Controller
 
         return array($entities, $pagerHtml);
     }
-    
-    
-    
+
+
     /*
      * Calculates the total of records string
      */
-    protected function getTotalOfRecordsString($queryBuilder, $request) {
+    protected function getTotalOfRecordsString($queryBuilder, $request)
+    {
         $totalOfRecords = $queryBuilder->select('COUNT(e.id)')->getQuery()->getSingleScalarResult();
         $show = $request->get('pcg_show', 10);
         $page = $request->get('pcg_page', 1);
@@ -153,8 +152,7 @@ class FilesController extends Controller
         }
         return "Showing $startRecord - $endRecord of $totalOfRecords Records.";
     }
-    
-    
+
 
     /**
      * Displays a form to create a new Files entity.
@@ -164,48 +162,37 @@ class FilesController extends Controller
      */
     public function newAction(Request $request)
     {
-
         $file = new Files();
-        $form   = $this->createForm(FilesType::class, $file);
+        $form = $this->createForm(FilesType::class, $file);
         $form->handleRequest($request);
-
         if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($file);
-            $em->flush();
-
-            $editLink = $this->generateUrl('files_edit', array('id' => $file->getId()));
-            $this->get('session')->getFlashBag()->add('success', "<a href='$editLink'>New file was created successfully.</a>" );
-
-            $nextAction=  $request->get('submit') == 'save' ? 'files' : 'files_new';
-            $file = $file->getBrochure();
-            $fileName = $this->generateUniqueFileName().'.'.$file->guessExtension();
-
-            // Move the file to the directory where brochures are stored
+            $brochure = $file->getBrochure();
+            $fileName = $this->generateUniqueFileName() . '.' . $brochure->guessExtension();
+            // Move the file to the directory whe   re brochures are stored
             try {
-                $file->move(
+                $brochure->move(
                     $this->getParameter('brochures_directory'),
                     $fileName
                 );
             } catch (FileException $e) {
                 // ... handle exception if something happens during file upload
             }
+
+            $file->setBrochure($fileName);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($file);
+            $em->flush();
+            $editLink = $this->generateUrl('files_edit', array('id' => $file->getId()));
+            $this->get('session')->getFlashBag()->add('success', "<a href='$editLink'>New file was created successfully.</a>");
+            $nextAction = $request->get('submit') == 'save' ? 'files' : 'files_new';
             return $this->redirectToRoute($nextAction);
         }
         return $this->render('files/new.html.twig', array(
             'file' => $file,
-            'form'   => $form->createView(),
+            'form' => $form->createView(),
         ));
-    }
 
-    /**
-     * @return string
-     */
-    private function generateUniqueFileName()
-    {
-        // md5() reduces the similarity of the file names generated by
-        // uniqid(), which is based on timestamps
-        return md5(uniqid());
     }
 
     /**
@@ -222,8 +209,6 @@ class FilesController extends Controller
             'delete_form' => $deleteForm->createView(),
         ));
     }
-    
-    
 
     /**
      * Displays a form to edit an existing Files entity.
@@ -241,7 +226,7 @@ class FilesController extends Controller
             $em = $this->getDoctrine()->getManager();
             $em->persist($file);
             $em->flush();
-            
+
             $this->get('session')->getFlashBag()->add('success', 'Edited Successfully!');
             return $this->redirectToRoute('files_edit', array('id' => $file->getId()));
         }
@@ -251,8 +236,6 @@ class FilesController extends Controller
             'delete_form' => $deleteForm->createView(),
         ));
     }
-    
-    
 
     /**
      * Deletes a Files entity.
@@ -262,7 +245,7 @@ class FilesController extends Controller
      */
     public function deleteAction(Request $request, Files $file)
     {
-    
+
         $form = $this->createDeleteForm($file);
         $form->handleRequest($request);
 
@@ -274,10 +257,10 @@ class FilesController extends Controller
         } else {
             $this->get('session')->getFlashBag()->add('error', 'Problem with deletion of the Files');
         }
-        
+
         return $this->redirectToRoute('files');
     }
-    
+
     /**
      * Creates a form to delete a Files entity.
      *
@@ -290,19 +273,19 @@ class FilesController extends Controller
         return $this->createFormBuilder()
             ->setAction($this->generateUrl('files_delete', array('id' => $file->getId())))
             ->setMethod('DELETE')
-            ->getForm()
-        ;
+            ->getForm();
     }
-    
+
     /**
      * Delete Files by id
      *
      * @Route("/delete/{id}", name="files_by_id_delete")
      * @Method("GET")
      */
-    public function deleteByIdAction(Files $file){
+    public function deleteByIdAction(Files $file)
+    {
         $em = $this->getDoctrine()->getManager();
-        
+
         try {
             $em->remove($file);
             $em->flush();
@@ -314,13 +297,13 @@ class FilesController extends Controller
         return $this->redirect($this->generateUrl('files'));
 
     }
-    
+
 
     /**
-    * Bulk Action
-    * @Route("/bulk-action/", name="files_bulk_action")
-    * @Method("POST")
-    */
+     * Bulk Action
+     * @Route("/bulk-action/", name="files_bulk_action")
+     * @Method("POST")
+     */
     public function bulkAction(Request $request)
     {
         $ids = $request->get("ids", array());
@@ -346,6 +329,42 @@ class FilesController extends Controller
 
         return $this->redirect($this->generateUrl('files'));
     }
-    
 
+    /**
+     * @return string
+     */
+    private function generateUniqueFileName()
+    {
+        // md5() reduces the similarity of the file names generated by
+        // uniqid(), which is based on timestamps
+        return md5(uniqid());
+    }
+    /**
+     * Download Files by id
+     *
+     * @Route(name="file_download")
+     * @Method("POST")
+     */
+
+    public function downloadAction(Request $request)
+    {
+        $id = $request->query->get("id");
+        $em = $this->getDoctrine("Files")->getManager();
+        $entity = $em->getRepository('AppBundle:Files')->find($id);
+        if (!$entity) {
+            throw $this->createNotFoundException('Unable to find File entity.');
+        }
+        // do encji History -------------------------------------
+        $date = "01-09-2015";// na sztywno poprawić
+
+        $historyItem = new History();
+        $historyItem->setUserID(1); // gdy będą użytkownicy przenieść tutaj usera
+        $historyItem->setFileID($id);
+        $historyItem->setDownloadDate(new \DateTime($date)); // format daty sprawdzić
+        $em->persist($historyItem);
+        $em->flush();
+        // koeniec encji history -----------------------------------
+        $pdfPath = $this->getParameter('brochures_directory').'/'.$entity->getBrochure();
+        return $this->file($pdfPath);
+    }
 }
