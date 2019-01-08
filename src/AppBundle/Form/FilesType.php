@@ -4,6 +4,7 @@ namespace AppBundle\Form;
 
 use AppBundle\Entity\Files;
 use Doctrine\ORM\Mapping\Entity;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -22,7 +23,12 @@ class FilesType extends AbstractType
             ->add('fileName')
             ->add('description')
             ->add('date')
-            ->add('subject')
+            ->add('subject',EntityType::class,array(
+                'class'=>"AppBundle\Entity\Subjects",
+                'choice_label'=>'name',
+                'expanded'=>false,
+                'multiple'=>false
+            ))
             ->add('brochure', FileType::class,array('data_class' => null , 'label' => 'Brochure (PDF file)'))
         ;
     }
