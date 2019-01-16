@@ -354,16 +354,14 @@ class FilesController extends Controller
         if (!$entity) {
             throw $this->createNotFoundException('Unable to find File entity.');
         }
-        // do encji History -------------------------------------
-        $date = "01-09-2015";// na sztywno poprawić
-
         $historyItem = new History();
+
         $historyItem->setUserID(1); // gdy będą użytkownicy przenieść tutaj usera
+
         $historyItem->setFileID($id);
-        $historyItem->setDownloadDate(new \DateTime($date)); // format daty sprawdzić
+        $historyItem->setDownloadDate(new \DateTime('now'));
         $em->persist($historyItem);
         $em->flush();
-        // koeniec encji history -----------------------------------
         $pdfPath = $this->getParameter('brochures_directory').'/'.$entity->getBrochure();
         return $this->file($pdfPath);
     }

@@ -25,9 +25,12 @@ class FilesType extends AbstractType
             ->add('date')
             ->add('subject',EntityType::class,array(
                 'class'=>"AppBundle\Entity\Subjects",
-                'choice_label'=>'name',
+                'choice_label'=>function ($przedmioty) {
+                    return $przedmioty->getName();
+                },
                 'expanded'=>false,
-                'multiple'=>false
+                'multiple'=>false,
+                'by_reference' => false,
             ))
             ->add('brochure', FileType::class,array('data_class' => null , 'label' => 'Brochure (PDF file)'))
         ;

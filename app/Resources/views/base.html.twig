@@ -28,15 +28,20 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/">System SUW</a>
+            <a class="navbar-brand" href="/">SUW</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
-                <li><a href="/files/">Lectures</a></li>
+                {% if is_granted('ROLE_USER') %}
+                <li><a href="/files">Lectures</a></li>
                 <li><a href="/subjects">Subjects</a></li>
-                <li><a href="#contact">Users</a></li>
+                {% if is_granted('ROLE_ADMIN') %} <li><a href="/activation">User Activator</a></li>{% endif %}
+                {% if is_granted('ROLE_ADMIN') %} <li><a href="/resetting/request">Reset Password</a></li>{% endif %}
                 <li><a href="#contact">History</a></li>
                 <li><a href="#contact">Statistics</a></li>
+                <li><a href="/profile">{{ app.user.username }}</a></li>
+                <li><a href="/logout">LogOut</a></li>
+                {% endif %}
             </ul>
         </div><!--/.nav-collapse -->
     </div>
@@ -46,7 +51,7 @@
 
     <div class="row">
         <div class="col-md-12">
-            {% block body %} {% endblock %}
+            {% block body %}{% endblock %}
         </div>
     </div>
 
