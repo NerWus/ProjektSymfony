@@ -13,6 +13,10 @@ use Pagerfanta\View\TwitterBootstrap3View;
 use AppBundle\Form\FilesType;
 use Symfony\symfony\src\Symfony\Component\Routing;
 use AppBundle\Entity\Files;
+use FOS\RestBundle\View\View;
+use FOS\RestBundle\Controller\Annotations as Rest;
+use Symfony\Component\HttpFoundation\Response;
+use FOS\RestBundle\Controller\FOSRestController;
 use AppBundle\Entity\History;
 
 /**
@@ -46,6 +50,33 @@ class FilesController extends Controller
 
         ));
     }
+
+    
+        /**
+     * Lists all Files entities.
+     *
+     * @Route("/", name="statistics")
+     * @Method("GET")
+     */
+    public function getAction(Request $request)
+    {
+        $em = $this->getDoctrine()->getManager();
+        $queryBuilder = $em->getRepository('AppBundle:Files')->createQueryBuilder('e');
+
+        list($filterForm, $queryBuilder) = $this->filter($queryBuilder, $request);
+        list($files, $pagerHtml) = $this->paginator($queryBuilder, $request);
+
+        $totalOfRecordsString = $this->getTotalOfRecordsString($queryBuilder, $request);
+
+        return $this->render('files/index.html.twig', array(
+            'files' => $files,
+            'pagerHtml' => $pagerHtml,
+            'filterForm' => $filterForm->createView(),
+            'totalOfRecordsString' => $totalOfRecordsString,
+
+        ));
+    }
+
 
     /**
      * Create filter form and process filter request.
