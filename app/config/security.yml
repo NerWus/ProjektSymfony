@@ -34,7 +34,7 @@ security:
         - { path: ^/files/index, role: ROLE_USER }
         - { path: ^/files/new, role: ROLE_ADMIN }
 
-
+        - { path: ^/activate, role: ROLE_ADMIN }
         - { path: ^/subjects, role: ROLE_USER }
         - { path: ^/files/new, role: ROLE_ADMIN }
 

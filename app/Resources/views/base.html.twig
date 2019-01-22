@@ -35,7 +35,7 @@
                 {% if is_granted('ROLE_USER') %}
                 <li><a href="/files">Lectures</a></li>
                 <li><a href="/subjects">Subjects</a></li>
-                {% if is_granted('ROLE_ADMIN') %} <li><a href="/activation">User Activator</a></li>{% endif %}
+                {% if is_granted('ROLE_ADMIN') %} <li><a href="/activate">User Activator</a></li>{% endif %}
                 {% if is_granted('ROLE_ADMIN') %} <li><a href="/resetting/request">Reset Password</a></li>{% endif %}
                 <li><a href="#contact">History</a></li>
                 <li><a href="#contact">Statistics</a></li>

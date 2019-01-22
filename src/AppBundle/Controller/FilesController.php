@@ -43,7 +43,6 @@ class FilesController extends Controller
             'pagerHtml' => $pagerHtml,
             'filterForm' => $filterForm->createView(),
             'totalOfRecordsString' => $totalOfRecordsString,
-
         ));
     }
 
@@ -345,7 +344,6 @@ class FilesController extends Controller
      * @Route(name="file_download")
      * @Method("POST")
      */
-
     public function downloadAction(Request $request)
     {
         $id = $request->query->get("id");
@@ -354,15 +352,51 @@ class FilesController extends Controller
         if (!$entity) {
             throw $this->createNotFoundException('Unable to find File entity.');
         }
+        if( $this->container->get( 'security.authorization_checker' )->isGranted( 'IS_AUTHENTICATED_FULLY' ) )
+        {
+            $user = $this->container->get('security.token_storage')->getToken()->getUser();
+            $username = $user->getUsername();
+            $userId = $this->getUser()->getId();
+        }
+
         $historyItem = new History();
 
-        $historyItem->setUserID(1); // gdy będą użytkownicy przenieść tutaj usera
-
+        $historyItem->setUserID($userId);
         $historyItem->setFileID($id);
         $historyItem->setDownloadDate(new \DateTime('now'));
         $em->persist($historyItem);
         $em->flush();
+        $time = date('H:i:s \O\n d/m/Y');
+        $pdf =  new \setasign\FpdiProtection\FpdiProtection();
         $pdfPath = $this->getParameter('brochures_directory').'/'.$entity->getBrochure();
-        return $this->file($pdfPath);
+        $waterm_text = $username . $time;
+        try {
+            $page_count = $pdf->setSourceFile($pdfPath);
+        } catch (Exception $pdfp_e) {
+            Warning::set(
+                'File is corrupted. Error: ' . $pdfp_e
+            );
+            return false;
+        }
+        for ($i = 1; $i <= $page_count; $i++) {
+            $page_templ = $pdf->importPage($i);
+            $size = $pdf->getTemplateSize($page_templ);
+            $page_orient = $size['orientation'];
+            $page_width = (int)$size['width'];
+            $page_height = (int)$size['height'];
+            $pdf->addPage($page_orient);
+            $pdf->SetFont('Times', 'I', 20);
+            $pdf->SetTextColor(254, 146, 0);
+            $text_x_pos = ceil((5 / 100) * $page_width); // Watermark position: % of page width, % of page height
+            $text_y_pos = ceil((1 / 150) * $page_height);
+            $pdf->SetXY($text_x_pos, $text_y_pos);
+            $pdf->Write(4, $waterm_text);
+            $pdf->useTemplate($page_templ);
+        }
+
+
+
+        $pdf->Output("D",$entity->getBrochure());
+        return;
     }
 }
