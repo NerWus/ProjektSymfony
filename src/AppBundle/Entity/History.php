@@ -70,7 +70,7 @@ class History
     /**
      * Get downloadDate
      *
-     * @return \DateTime
+     * @return \DateTime\
      */
     public function getDownloadDate()
     {

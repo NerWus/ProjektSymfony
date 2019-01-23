@@ -37,8 +37,8 @@
                 <li><a href="/subjects">Subjects</a></li>
                 {% if is_granted('ROLE_ADMIN') %} <li><a href="/activate">User Activator</a></li>{% endif %}
                 {% if is_granted('ROLE_ADMIN') %} <li><a href="/resetting/request">Reset Password</a></li>{% endif %}
-                <li><a href="#contact">History</a></li>
-                <li><a href="#contact">Statistics</a></li>
+                <li><a href="/download_history">History</a></li>
+                <li><a href="/statistics">Statistics</a></li>
                 <li><a href="/profile">{{ app.user.username }}</a></li>
                 <li><a href="/logout">LogOut</a></li>
                 {% endif %}

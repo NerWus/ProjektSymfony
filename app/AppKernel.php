@@ -22,6 +22,9 @@ class AppKernel extends Kernel
             new Petkopara\MultiSearchBundle\PetkoparaMultiSearchBundle(),
             new Petkopara\CrudGeneratorBundle\PetkoparaCrudGeneratorBundle(),
             new FOS\UserBundle\FOSUserBundle(),
+            new FOS\RestBundle\FOSRestBundle(),
+            new JMS\SerializerBundle\JMSSerializerBundle(),
+            new Nelmio\CorsBundle\NelmioCorsBundle()
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {

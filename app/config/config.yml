@@ -82,4 +82,3 @@ fos_user:
   from_email:
     address: "%fos_address%"
     sender_name: "%fos_name%"
-
